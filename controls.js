@@ -31,9 +31,7 @@ function recalc(source) {
         if (source === 'cost' || source === 'markup') {
             price = cost * (1 + markup / 100);
             priceSlider.value = Math.round(price * 100);
-        }
-
-        if (source === 'price') {
+        } else {
             cost = price / (1 + markup / 100);
             costSlider.value = Math.round(cost * 100);
         }

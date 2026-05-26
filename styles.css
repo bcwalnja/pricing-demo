@@ -24,6 +24,7 @@ body {
 }
 
 .wrapper {
+    position: relative;
     display: grid;
     grid-template-areas:
         "header header header"
@@ -52,4 +53,31 @@ input:disabled {
     color: gray;
     border-color: gray;
     opacity: 0.6;
+}
+
+.fixed-container {
+    position: fixed;
+    display: flex;
+}
+
+.bottom {
+    bottom: 50px;
+}
+
+.left {
+    left: 50px;
+}
+
+.top {
+    top: 50px;
+}
+
+.right {
+    right: 50px;
+}
+
+.fixed-container img {
+    width: 30vmin;
+    object-fit: contain;
+    pointer-events: none;
 }
