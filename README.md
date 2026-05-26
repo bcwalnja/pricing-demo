@@ -5,5 +5,3 @@
 ---
 
 [Pricing Demo](https://bcwalnja.github.io/pricing-demo/home)
-
-<a href="https://bcwalnja.github.io/pricing-demo/home" target="_blank">Pricing Demo</a>
