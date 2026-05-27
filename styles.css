@@ -37,11 +37,19 @@ body {
     padding: 8px;
 }
 
-input {
+.slider {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.slider input {
     background: var(--bg);
     color: var(--fg);
     border: 1px solid var(--fg);
     border-radius: 5px;
+    max-width: clamp(30%, 40%, 45%);
 }
 
 input:disabled {
@@ -62,4 +70,8 @@ input:disabled {
 
 .components img {
     max-width: 49%;
+}
+
+.special-trim {
+    flex: 1;
 }
