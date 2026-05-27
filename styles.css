@@ -40,8 +40,7 @@ body {
 .slider {
     display: flex;
     width: 100%;
-    justify-content: space-between;
-    flex-wrap: wrap;
+    flex-direction: column;
 }
 
 .slider input {
@@ -68,10 +67,19 @@ input:disabled {
     flex: 1;
 }
 
-.components img {
+img {
     max-width: 49%;
 }
 
 .special-trim {
+    flex: 1;
+    display: flex;
+}
+
+.special-trim-lf-cost {
+    width: max-content;
+}
+
+.special-trim-display {
     flex: 1;
 }

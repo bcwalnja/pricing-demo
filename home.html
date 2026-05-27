@@ -37,40 +37,56 @@
                     <input type="range" id="markup" min="0" max="300" value="50">
 
                 </div>
+
+                <img src="./coil.png" />
+
             </div>
 
             <div class="components border">
-                <img src="./coil.png" />
                 <img src="./hem.png" />
             </div>
 
             <div class="special-trim border">
-                <svg viewBox="0 0 28 40" width="100">
-                    <path d="M28 20 L28 40 L14 40 L14 30 L16 30 L16 34" fill="none" stroke="white" stroke-width="1" />
-                    <path d="M14 0 L14 20 L0 20 L0 10 L2 10 L2 14" fill="none" stroke="white" stroke-width="1" />
 
-                    <path d="M28 20 L14 0" stroke="white" />
-                    <path d="M28 40 L14 20" stroke="white" />
-                    <path d="M14 40 L0 20" stroke="white" />
-                    <path d="M14 30 L0 10" stroke="white" />
-                    <path d="M16 30 L2 10" stroke="white" />
-                    <path d="M16 34 L2 14" stroke="white" />
+                <div class="special-trim-display">
 
-                </svg>
+                    <div class="slider">
+                        <label for="special-trim-length">
+                            Trim Length:
+                            <span id="special-trim-length-display">1' 1"</span>
+                        </label>
+                        <input type="range" id="special-trim-length" min="0" max="1000" value="100">
+                    </div>
 
+                    <div class="slider">
+                        <label for="special-trim-stretchout">
+                            Stretchout:
+                            <span id="special-trim-stretchout-display">1' 1"</span>
+                        </label>
+                        <input type="range" id="stretchout" min="0" max="1000" value="1000">
+                    </div>
 
-                <svg viewBox="0 0 28 40" width="100">
-                    <path id="top-trim" stroke="white" fill="none" />
-                    <path id="bottom" stroke="white" fill="none" />
-                </svg>
+                    <svg viewBox="0 0 28 40" width="100">
+                        <path id="top-trim" stroke="white" fill="none" />
+                        <path id="bottom" stroke="white" fill="none" />
+                    </svg>
 
+                </div>
 
-                <div class="slider">
-                    <label for="special-trim-length">
-                        Trim Length:
-                        <span id="special-trim-length-display">1' 1"</span>
-                    </label>
-                    <input type="range" id="special-trim-length" min="0" max="1000" value="100">
+                <div class="special-trim-lf-cost">
+                    Linear Foot Cost: 
+                    <div>
+                        Hems: 
+                        <span id="special-trim-length-display">$0.00</span>
+                    </div>
+                    <div>
+                        Bends: 
+                        <span id="special-trim-length-display">$0.00</span>
+                    </div>
+                    <div>
+                        Stretchout: 
+                        <span id="special-trim-length-display">$0.00</span>
+                    </div>
                 </div>
 
             </div>

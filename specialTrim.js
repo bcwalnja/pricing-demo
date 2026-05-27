@@ -2,6 +2,12 @@ const slider = document.getElementById('special-trim-length');
 const display = document.getElementById('special-trim-length-display');
 const topTrim = document.getElementById('top-trim');
 const bottomTrim = document.getElementById('bottom');
+const stretchSlider = document.getElementById('stretchout');
+
+let stretchInches = stretchSlider.value * 20 / 1000;
+let tStretch = stretchInches / 20;
+const stretchDisplay = document.getElementById('special-trim-stretchout-display');
+
 const CFG = {
     sliderMax: 1000,
 
@@ -12,9 +18,9 @@ const CFG = {
     maxOffsetY: 2,
 
     // geometry
-    w: 14,
+    w: 12,
     h: 20,
-    hemW: 2,
+    hemW: -2,
     hemH: 4,
 
     // length display
@@ -36,6 +42,12 @@ function buildProfile(x0, y0) {
         `L${x0 + CFG.hemW} ${y0 + CFG.h / 2}`,
         `L${x0 + CFG.hemW} ${y0 + CFG.h / 2 + CFG.hemH}`
     ].join(' ');
+}
+
+function pathFromPoints(pts) {
+  return pts.map((p, i) =>
+    (i === 0 ? 'M' : 'L') + p[0] + ' ' + p[1]
+  ).join(' ');
 }
 
 // update transform
@@ -68,63 +80,113 @@ function updateLengthDisplay(t) {
 
 // master update
 function update() {
-    const t = slider.value / CFG.sliderMax;
+  const tMove = slider.value / CFG.sliderMax;
+  const tStretch = (stretchSlider.value * 20 / 1000) / 20;
 
-    updateTransform(t);
-    updateLengthDisplay(t);
-    drawConnectors(t);
+  const pts = buildTrimWithStretch(14, 20, tStretch);
+
+  bottomTrim.setAttribute('d', pathFromPoints(pts));
+  topTrim.setAttribute('d', pathFromPoints(pts));
+
+  updateTransform(tMove);
+  drawConnectors(tMove, pts);
+  updateStretchout();
+  updateLengthDisplay(tMove);
 }
 
 function getPoints(x0, y0) {
-  return [
-    [x0 + CFG.w, y0],
-    [x0 + CFG.w, y0 + CFG.h],
-    [x0, y0 + CFG.h],
-    [x0, y0 + CFG.h / 2],
-    [x0 + CFG.hemW, y0 + CFG.h / 2],
-    [x0 + CFG.hemW, y0 + CFG.h / 2 + CFG.hemH]
-  ];
+    return [
+        [x0 + CFG.w, y0],
+        [x0 + CFG.w, y0 + CFG.h],
+        [x0, y0 + CFG.h],
+        [x0, y0 + CFG.h / 2],
+        [x0 + CFG.hemW, y0 + CFG.h / 2],
+        [x0 + CFG.hemW, y0 + CFG.h / 2 + CFG.hemH]
+    ];
 }
 
-function drawConnectors(t) {
-    const svg = topTrim.parentNode;
+function dist(a, b) {
+    return Math.hypot(b[0] - a[0], b[1] - a[1]);
+}
 
-    // remove old
-    document.querySelectorAll('.connector').forEach(e => e.remove());
+function lerpPt(a, b, t) {
+    return [
+        a[0] + (b[0] - a[0]) * t,
+        a[1] + (b[1] - a[1]) * t
+    ];
+}
 
-    const b = getPoints(14, 20);
-    const scale = lerp(CFG.minScale, CFG.maxScale, t);
+function buildTrimWithStretch(x0, y0, t) {
+  const pts = getPoints(x0, y0);
 
-    const tx = lerp(0, CFG.maxOffsetX, t);
-    const ty = lerp(0, CFG.maxOffsetY, t);
+  let total = 0;
+  for (let i = 0; i < pts.length - 1; i++) {
+    total += dist(pts[i], pts[i+1]);
+  }
 
-    const topPts = b.map(([x, y]) => [
-        x * scale + tx,
-        y * scale + ty
-    ]);
+  let remaining = total * (1 - t);
 
-    for (let i = 0; i < b.length; i++) {
-        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+  let newPts = [];
+  let i = 0;
 
-        line.setAttribute("x1", b[i][0]);
-        line.setAttribute("y1", b[i][1]);
-        line.setAttribute("x2", topPts[i][0]);
-        line.setAttribute("y2", topPts[i][1]);
+  while (i < pts.length - 1) {
+    const d = dist(pts[i], pts[i+1]);
 
-        line.setAttribute("stroke", "white");
-        line.setAttribute("stroke-width", "1");
-        line.setAttribute("class", "connector");
-
-        svg.appendChild(line);
+    if (remaining > d) {
+      remaining -= d;
+      i++;
+    } else {
+      const u = remaining / d;
+      newPts.push(lerpPt(pts[i], pts[i+1], u));
+      break;
     }
+  }
+
+  for (; i + 1 < pts.length; i++) {
+    newPts.push(pts[i+1]);
+  }
+
+  return newPts;
+}
+
+function drawConnectors(tMove, pts) {
+  document.querySelectorAll('.connector').forEach(e => e.remove());
+
+  const scale = lerp(CFG.minScale, CFG.maxScale, tMove);
+  const tx = lerp(0, CFG.maxOffsetX, tMove);
+  const ty = lerp(0, CFG.maxOffsetY, tMove);
+
+  const svg = topTrim.parentNode;
+
+  for (let i = 0; i < pts.length; i++) {
+    const [x1, y1] = pts[i];
+    const x2 = x1 * scale + tx;
+    const y2 = y1 * scale + ty;
+
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("x1", x1);
+    line.setAttribute("y1", y1);
+    line.setAttribute("x2", x2);
+    line.setAttribute("y2", y2);
+    line.setAttribute("stroke", "white");
+    line.setAttribute("class", "connector");
+
+    svg.appendChild(line);
+  }
+}
+
+function updateStretchout() {
+    const inchesTotal = Math.round(stretchSlider.value * 20 / 1000, 0);
+    stretchDisplay.textContent = `${inchesTotal}"`;
 }
 
 // set fixed paths (NO offset baked in anymore)
-bottomTrim.setAttribute('d', buildProfile(14, 20));
-topTrim.setAttribute('d', buildProfile(14, 20));
+bottomTrim.setAttribute('d', buildTrimWithStretch(14, 20, tStretch));
+topTrim.setAttribute('d', buildTrimWithStretch(14, 20, tStretch));
 
 // events
 slider.oninput = update;
+stretchSlider.oninput = update;
 
 // initial render
 update();
