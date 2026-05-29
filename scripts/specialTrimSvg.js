@@ -88,6 +88,7 @@ APP.modules.svg = (function () {
     function compute(state) {
         const stretchRatio = state.inchesStretchout / 20;
         const points = cutShapeByRatio(createTrimShape(14, 20), stretchRatio);
+        const path = updatePaths(points);
         const transform = calculateTransform(state.tMove);
         return { path, transform, points }
 
