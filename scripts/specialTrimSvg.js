@@ -1,169 +1,100 @@
 APP.modules.svg = (function () {
 
-    // ---- config (SVG-specific only) ----
-    const CFG = {
+    // configuration
+    const CONFIG = {
         sliderMax: 1000,
 
-        // transform
-        minScale: 1,
-        maxScale: 0.1,
-        maxOffsetX: 1.4,
-        maxOffsetY: 2,
+        scale: { from: 1, to: 0.1 },
+        offset: { x: 1.4, y: 2 },
 
-        // geometry
-        w: 12,
-        h: 20,
-        hemW: -2,
-        hemH: 4
+        trim: {
+            width: 12,
+            height: 20,
+            hemWidth: -2,
+            hemHeight: 4
+        }
     }
 
+    // basic math
+    const interpolate = (a, b, t) => a + (b - a) * t
 
-    // ---- DOM ----
-    const topTrim = document.getElementById('top-trim')
-    const bottomTrim = document.getElementById('bottom')
-    const stretchSlider = document.getElementById('stretchout')
-    const lengthSlider = document.getElementById('special-trim-length')
+    const distance = ([x1, y1], [x2, y2]) =>
+        Math.hypot(x2 - x1, y2 - y1)
 
+    const interpolatePoint = ([x1, y1], [x2, y2], t) => ([
+        x1 + (x2 - x1) * t,
+        y1 + (y2 - y1) * t
+    ])
 
-    // ---- math utils ----
-    function lerp(a, b, t) {
-        return a + (b - a) * t
-    }
+    const updatePaths = points =>
+        points.map((p, i) => `${i ? 'L' : 'M'}${p[0]} ${p[1]}`).join(' ')
 
-    function dist(a, b) {
-        return Math.hypot(b[0] - a[0], b[1] - a[1])
-    }
+    // shape construction
+    function createTrimShape(originX, originY) {
+        const { width, height, hemWidth, hemHeight } = CONFIG.trim
 
-    function lerpPt(a, b, t) {
         return [
-            a[0] + (b[0] - a[0]) * t,
-            a[1] + (b[1] - a[1]) * t
+            [originX + width, originY],
+            [originX + width, originY + height],
+            [originX, originY + height],
+            [originX, originY + height / 2],
+            [originX + hemWidth, originY + height / 2],
+            [originX + hemWidth, originY + height / 2 + hemHeight]
         ]
     }
 
-    function pathFromPoints(pts) {
-        return pts.map((p, i) =>
-            (i === 0 ? 'M' : 'L') + p[0] + ' ' + p[1]
-        ).join(' ')
-    }
+    function cutShapeByRatio(points, ratio) {
+        let totalLength = 0
 
-
-    // ---- geometry ----
-    function getPoints(x0, y0) {
-        return [
-            [x0 + CFG.w, y0],
-            [x0 + CFG.w, y0 + CFG.h],
-            [x0, y0 + CFG.h],
-            [x0, y0 + CFG.h / 2],
-            [x0 + CFG.hemW, y0 + CFG.h / 2],
-            [x0 + CFG.hemW, y0 + CFG.h / 2 + CFG.hemH]
-        ]
-    }
-
-    function buildTrimWithStretch(x0, y0, t) {
-        const pts = getPoints(x0, y0)
-
-        let total = 0
-        for (let i = 0; i < pts.length - 1; i++) {
-            total += dist(pts[i], pts[i + 1])
+        for (let i = 0; i < points.length - 1; i++) {
+            totalLength += distance(points[i], points[i + 1])
         }
 
-        let remaining = total * (1 - t)
-        let newPts = []
+        let remaining = totalLength * (1 - ratio)
+        const result = []
         let i = 0
 
-        while (i < pts.length - 1) {
-            const d = dist(pts[i], pts[i + 1])
+        while (i < points.length - 1) {
+            const segmentLength = distance(points[i], points[i + 1])
 
-            if (remaining > d) {
-                remaining -= d
+            if (remaining > segmentLength) {
+                remaining -= segmentLength
                 i++
-            } else {
-                const u = d === 0 ? 0 : remaining / d
-                newPts.push(lerpPt(pts[i], pts[i + 1], u))
-                break
+                continue
             }
+
+            const t = segmentLength === 0 ? 0 : remaining / segmentLength
+            result.push(interpolatePoint(points[i], points[i + 1], t))
+            break
         }
 
-        for (; i + 1 < pts.length; i++) {
-            newPts.push(pts[i + 1])
+        for (; i + 1 < points.length; i++) {
+            result.push(points[i + 1])
         }
 
-        return newPts
+        return result
     }
 
+    // transforms
+    function calculateTransform(progress) {
+        return {
+            scale: interpolate(CONFIG.scale.from, CONFIG.scale.to, progress),
+            x: interpolate(0, CONFIG.offset.x, progress),
+            y: interpolate(0, CONFIG.offset.y, progress)
+        }
+    }
 
-    // ---- compute ----
+    // public api
     function compute(state) {
-        const tStretch = state.inchesStretchout / 20 // normalize
+        const stretchRatio = state.inchesStretchout / 20;
+        const points = cutShapeByRatio(createTrimShape(14, 20), stretchRatio);
+        const transform = calculateTransform(state.tMove);
+        return { path, transform, points }
 
-        return {
-            pts: buildTrimWithStretch(14, 20, tStretch),
-            tMove: state.tMove
-        }
     }
-
-
-    // ---- render helpers ----
-    function getTransform(t) {
-        return {
-            scale: lerp(CFG.minScale, CFG.maxScale, t),
-            tx: lerp(0, CFG.maxOffsetX, t),
-            ty: lerp(0, CFG.maxOffsetY, t)
-        }
-    }
-
-    function updateTransform(t) {
-        const { scale, tx, ty } = getTransform(t)
-
-        topTrim.setAttribute(
-            'transform',
-            `translate(${tx}, ${ty}) scale(${scale})`
-        )
-    }
-
-    function applyPaths(pts) {
-        const d = pathFromPoints(pts)
-        bottomTrim.setAttribute('d', d)
-        topTrim.setAttribute('d', d)
-    }
-
-    function drawConnectors(tMove, pts) {
-        document.querySelectorAll('.connector').forEach(e => e.remove())
-
-        const { scale, tx, ty } = getTransform(tMove)
-        const svg = topTrim.parentNode
-
-        for (let i = 0; i < pts.length; i++) {
-            const [x1, y1] = pts[i]
-            const x2 = x1 * scale + tx
-            const y2 = y1 * scale + ty
-
-            const line = document.createElementNS("http://www.w3.org/2000/svg", "line")
-
-            line.setAttribute("x1", x1)
-            line.setAttribute("y1", y1)
-            line.setAttribute("x2", x2)
-            line.setAttribute("y2", y2)
-            line.setAttribute("stroke", "white")
-            line.setAttribute("class", "connector")
-
-            svg.appendChild(line)
-        }
-    }
-
-
-    // ---- render ----
-    function render(data, state) {
-        applyPaths(data.pts)
-        updateTransform(data.tMove)
-        drawConnectors(data.tMove, data.pts)
-    }
-
 
     return {
-        compute,
-        render
+        compute
     }
 
 })()

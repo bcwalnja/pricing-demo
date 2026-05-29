@@ -16,7 +16,7 @@ body {
     max-width: 100%;
     background: var(--bg);
     color: var(--fg);
-    font-family: Helvetica, sans-serif;
+    font-family: sans-serif;
     margin: 0;
 }
 
@@ -48,7 +48,7 @@ body {
     color: var(--fg);
     border: 1px solid var(--fg);
     border-radius: 5px;
-    max-width: clamp(30%, 40%, 45%);
+    max-width: clamp(9rem, 50%, 20rem);
 }
 
 input:disabled {
@@ -68,7 +68,7 @@ input:disabled {
 }
 
 img {
-    max-width: 49%;
+    width: clamp(100px, 50%, 250px);
 }
 
 .special-trim {
