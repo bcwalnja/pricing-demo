@@ -9,7 +9,9 @@ const els = {
     markupSlider: document.getElementById('markup'),
     markupDisplay: document.getElementById('markup-display'),
 
-    markupToggle: document.getElementById('markup-enabled')
+    markupToggle: document.getElementById('markup-enabled'),
+    lengthSlider: document.getElementById('special-trim-length'),
+    stretchSlider: document.getElementById('stretchout')
 }
 
 
